@@ -3,22 +3,24 @@
 rerun if fails first time
 
 """
-import random
-import numpy as np
-import os
-from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, AnnSearchRequest, WeightedRanker
-import random
-import time
+#import random
+#import numpy as np
+#import os
+### FieldSchema, CollectionSchema, DataType,
+from pymilvus import connections, Collection, AnnSearchRequest, WeightedRanker
+#import random
+#import time
 from transformers import AutoTokenizer, AutoModel
 import torch
 from transformers import pipeline
-import Streamlit as st
+import streamlit as st
 from spellchecker import SpellChecker
 
 
 spell = SpellChecker()
 
-
+# Token
+# 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
 
 # Connect to your Zilliz Cloud cluster
 CLUSTER_ENDPOINT = "https://in03-cf607103ea8262d.serverless.gcp-us-west1.cloud.zilliz.com"
@@ -108,18 +110,24 @@ def updateQuery(query):
     return ' '.join(corrected_words)
 
 
-qa_pipeline = pipeline("question-answering", model="meta-llama/Llama-3.2-11B-Vision-Instruct", max_length=2000)
-
-
-
+qa_pipeline = pipeline("question-answering", model="bert-large-uncased-whole-word-masking-finetuned-squad", max_length=2000, max_answer_len=200, device = 0)
 
 
 def get_answer(question):
     print('start get answer')
-    prompt = f"Based on the following context, provide a detailed answer with supporting information, including examples and relevant details, for the question: {question}"
-    result = qa_pipeline({"question": prompt, "context": hybrid_search(question)})
+    prompt = f"Answer the question with detailed support based on the context. be as detailed as possible and provide the longest answer you can Question: {question}"
+
+    search_results = hybrid_search(question)
+    context = " ".join([result for result in search_results])  
+    print("Context:", context)
+
+    # Use the prompt as part of the question in the pipeline
+    result = qa_pipeline(question=prompt, context=context)
+    print("QA Result:", result)
+    answer = result.get('answer', "No relevant answer found.") 
     print('end get answer')
-    return result['answer']
+    return answer
+
 
 
 
