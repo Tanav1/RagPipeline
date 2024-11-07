@@ -13,7 +13,7 @@ CHROMA_PATH = "/home/melody/repos/hackathon/pdf-extract-notebook/chroma"
 
 load_dotenv()
 
-os.environ['HUGGINGFACEHUB_API_TOKEN'] = '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'
+os.environ['HUGGINGFACEHUB_API_TOKEN'] = 'token'
 
 
 PROMPT_TEMPLATE = '''
