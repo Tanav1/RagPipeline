@@ -16,7 +16,7 @@ data = json.loads(Path(file_path).read_text())
 
 load_dotenv()
 
-os.environ['HUGGINGFACEHUB_API_TOKEN'] = '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'
+os.environ['HUGGINGFACEHUB_API_TOKEN'] = 'token'
 
 def backend_factory() -> requests.Session:
     session = requests.Session()    
