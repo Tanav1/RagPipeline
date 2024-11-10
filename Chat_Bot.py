@@ -1,15 +1,23 @@
 import streamlit as st
+import sys
 from transformers import AutoTokenizer, AutoModel, pipeline
 import torch
 from pymilvus import connections, Collection, AnnSearchRequest, WeightedRanker
 from spellchecker import SpellChecker
+import streamlit_shadcn_ui as ui
+
+st.set_page_config(
+    page_title="Navy Chat",
+    page_icon="🚢",
+    layout="centered"
+)
 
 # Set up SpellChecker
 spell = SpellChecker()
 
 # Streamlit Sidebar for configuration
 with st.sidebar:
-    st.title("💬 Hackathon RAG Model Chatbot")
+    st.title("🚢 Medical Navy Chatbot 💬")
     st.write("Configure your chatbot settings below.")
 
 # Connect to Zilliz Cloud cluster
@@ -72,11 +80,19 @@ def get_answer(question):
 
 # Initialize session state for messages
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "Please, Enter your question."}]
+    st.session_state["messages"] = [{"role": "assistant", "content": "Please enter your question."}]
 
 # Main Streamlit app
 st.title("💬 Chatbot")
-st.caption("A Streamlit chatbot powered by Rag Model")
+st.caption("This chatbot is trained on the following PDF's shown below.")
+
+ui.badges(badge_list=[("Humanitarian Assistance and Disaster Relief Aboard the USNS Mercy", "secondary"), 
+                      ("US Navy Ship-Based Disaster Response", "secondary"), 
+                      ("Sea Power: The US Navy and Foreign Policy", "secondary"), 
+                      ("A Decade of Surgery Abroad the US Naval Ship Comfort", "secondary"), 
+                      ("Hospital Ships Adrift?", "secondary"),], 
+                      class_name="flex gap-2", key="badges1")
+
 
 # Display chat history
 for msg in st.session_state.messages:
