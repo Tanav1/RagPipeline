@@ -1,6 +1,6 @@
 import streamlit as st
 import sys
-from transformers import AutoTokenizer, AutoModel, pipeline
+from transformers import AutoTokenizer, AutoModel, pipeline, AutoModelforCausalLM
 import torch
 from pymilvus import connections, Collection, AnnSearchRequest, WeightedRanker
 from spellchecker import SpellChecker
@@ -11,6 +11,8 @@ st.set_page_config(
     page_icon="🚢",
     layout="centered"
 )
+
+tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3", use_fast=True)
 
 # Set up SpellChecker
 spell = SpellChecker()
@@ -33,7 +35,11 @@ tokenizer_hyb.add_special_tokens({'pad_token': '[PAD]'})
 model.resize_token_embeddings(len(tokenizer_hyb))
 
 # Define QA Pipeline
-qa_pipeline = pipeline("question-answering", model="bert-large-uncased-whole-word-masking-finetuned-squad", max_length=2000, max_answer_len=200)
+qa_pipeline = pipeline("question-answering", 
+                       model="bert-large-uncased-whole-word-masking-finetuned-squad", 
+                       max_length=2000, 
+                       max_answer_len=200)
+qa_pipeline = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.3")
 
 # Function to perform hybrid search
 def hybrid_search(query_text):
@@ -71,12 +77,71 @@ def updateQuery(query):
     return ' '.join(corrected_words)
 
 # Function to get answer from QA pipeline
+# def get_answer(question):
+#     # First, fetch the relevant context from hybrid search
+#     search_results = hybrid_search(question)  # Assuming this returns relevant search results
+    
+#     # Combine search results into a single context string
+#     context = " ".join(search_results)
+    
+#     # Build the prompt with context included and a clear instruction for a detailed response
+#     prompt = f"""
+#     Based on the detailed context provided below, answer the question thoroughly, considering all relevant information.
+
+#     Context:
+#     {context}
+
+#     Question:
+#     {question}
+
+#     Answer the question in detail using the provided context. Be sure to explain the reasoning and include supporting information from the context.
+#     """
+    
+#     # Generate response using the QA pipeline
+#     result = qa_pipeline(prompt, max_new_tokens=150, do_sample=True, truncation=False)
+    
+#     # Check if `result` is a list and extract the first response
+#     if isinstance(result, list) and len(result) > 0:
+#         return result[0].get('generated_text', "No relevant answer found.")
+#     else:
+#         return "No relevant answer found."
+
+# Function to get answer from QA pipeline
 def get_answer(question):
-    prompt = f"Answer the question with detailed support based on the context. Question: {question}"
-    search_results = hybrid_search(question)
+    # First, fetch the relevant context from hybrid search
+    search_results = hybrid_search(question) # Assuming this returns relevant search results
+
+    # Combine search results into a single context string
     context = " ".join(search_results)
-    result = qa_pipeline(question=prompt, context=context)
-    return result.get('answer', "No relevant answer found.")
+
+    # Build the prompt with context included and a clear instruction for a detailed response
+    prompt = f"""
+    Based on the detailed context provided below, answer the question thoroughly, considering all relevant information.
+
+    Context:
+    {context}
+
+    Question:
+    {question}
+
+    Answer the question in detail using the provided context. Be sure to explain the reasoning and include supporting information from the context.
+    """
+    
+    # Generate response using the QA pipeline
+    result = qa_pipeline(prompt, max_new_tokens=150, do_sample=True, truncation=False)
+    
+    # Check if `result` is a list and extract the first response
+    if isinstance(result, list) and len(result) > 0:
+        answer_text = result[0].get('generated_text', "")
+        
+        # Start the answer extraction after the prompt section
+        answer_start = answer_text.lower().find("answer the question in detail using the provided context.")
+        if answer_start != -1:
+            return answer_text[answer_start + len("Answer the question in detail using the provided context."):].strip()
+        else:
+            return "No relevant answer found."
+    else:
+        return "No relevant answer found.
 
 # Initialize session state for messages
 if "messages" not in st.session_state:
