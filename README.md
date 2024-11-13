@@ -18,7 +18,15 @@ Ensure you have the required libraries installed by running:
 
 
 # --- pip install streamlit torch transformers pymilvus spellchecker requests streamlit-shadcn-ui PyPDF2 langchain sentence-transformers
+or 
 
+# --- pip install -r requirements.txt
+
+How to set up ollama 3.2. Must run before.
+
+# --- ollama serve
+
+# --- ollama pull llama3.2
 
 How to run:
 
